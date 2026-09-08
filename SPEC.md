@@ -136,3 +136,12 @@ La implementación concreta del esquema de datos puede evolucionar, siempre que 
 ## 11. Estado del proyecto
 
 El MVP está implementado con dos entradas (`index.html` y `tv.html`), sincronización mediante Firebase, reglas de Realtime Database, pruebas automatizadas y despliegue de GitHub Pages. `README.md` contiene la configuración y las limitaciones operativas actuales.
+
+## 12. Diagnóstico temporal y explícito del TV
+
+- Únicamente `debug=1` como parámetro de la URL del TV habilita un panel de diagnóstico cuando ocurre un error.
+- Mostrar entorno del navegador, disponibilidad de APIs, autenticación sin UID, presencia de Realtime Database, reloj local, offset, hora estimada del servidor y diferencia local menos servidor.
+- Distinguir fallos de inicialización de Firebase, autenticación, lectura del reloj, escritura de sesión, transacción de pairing y onDisconnect, conservando la causa interna y mostrando code, name y message redactado solo en debug.
+- Mantener visible el fallo de lectura del reloj aunque se use el fallback local o falle una operación posterior.
+- Nunca mostrar configuración completa, API key, tokens, credenciales, UID, sessionId ni códigos adicionales. No almacenar ni transmitir diagnósticos.
+- Sin ese parámetro, conservar mensajes genéricos y no añadir observadores de diagnóstico. No cambiar arquitectura, reglas ni comportamiento del ciclo de vida para diagnosticar.

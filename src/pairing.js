@@ -38,8 +38,10 @@ export function releaseOwnedPhoneUid(currentPhoneUid, phoneUid) {
 }
 
 function userFacingFirebaseError(publicMessage, error) {
-  if (import.meta.env?.DEV && error?.code) return new Error(`${publicMessage} (${error.code})`);
-  return new Error(publicMessage);
+  const wrapped = new Error(import.meta.env?.DEV && error?.code ? `${publicMessage} (${error.code})` : publicMessage);
+  wrapped.publicMessage = publicMessage;
+  wrapped.cause = error;
+  return wrapped;
 }
 
 function sessionClaimError(problem) {
@@ -57,21 +59,32 @@ function sessionClaimError(problem) {
   }
 }
 
-export async function getServerNow(database) {
+export async function getServerNow(database, diagnostics) {
+  diagnostics?.stage('server-time');
   try {
     const snapshot = await get(ref(database, '.info/serverTimeOffset'));
-    return Date.now() + (snapshot.val() || 0);
-  } catch {
-    return Date.now();
+    const localNow = Date.now();
+    const offset = snapshot.val() || 0;
+    diagnostics?.update({ serverTimeOffset: snapshot.val(), localNow, serverNow: localNow + offset, offset, localMinusServer: -offset });
+    return localNow + offset;
+  } catch (error) {
+    const localNow = Date.now();
+    diagnostics?.update({ serverTimeOffset: 'falló; fallback local', localNow, serverNow: 'desconocido', offset: 'desconocido', localMinusServer: 'desconocido' });
+    diagnostics?.error(error, 'server-time');
+    return localNow;
   }
 }
 
-export async function createTvSession(database, tvUid) {
+export async function createTvSession(database, tvUid, diagnostics) {
+  diagnostics?.stage('create-session');
+  diagnostics?.protect(tvUid);
   const sessionId = generateSessionId();
+  diagnostics?.protect(sessionId);
   const sessionRef = ref(database, `sessions/${sessionId}`);
-  const now = await getServerNow(database);
+  const now = await getServerNow(database, diagnostics);
 
   try {
+    diagnostics?.stage('create-session');
     await set(sessionRef, {
       tvUid,
       phoneUid: null,
@@ -87,12 +100,15 @@ export async function createTvSession(database, tvUid) {
   }
 
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt += 1) {
+    diagnostics?.stage('create-pairing');
     const code = generatePairingCode();
+    diagnostics?.protect(code);
     const pairingRef = ref(database, `pairings/${code}`);
-    const pairingNow = await getServerNow(database);
+    const pairingNow = await getServerNow(database, diagnostics);
     const expiresAt = pairingNow + PAIRING_TTL_MS;
     let result;
     try {
+      diagnostics?.stage('create-pairing');
       result = await runTransaction(pairingRef, (current) => {
         if (!canClaimPairing(current, pairingNow)) return;
         return { sessionId, tvUid, expiresAt, createdAt: Date.now() };
@@ -103,6 +119,7 @@ export async function createTvSession(database, tvUid) {
     }
 
     if (result.committed) {
+      diagnostics?.stage('onDisconnect');
       const disconnectPairing = onDisconnect(pairingRef);
       const disconnectSession = onDisconnect(sessionRef);
       try {

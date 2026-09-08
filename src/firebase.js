@@ -30,8 +30,10 @@ const missingVariables = Object.entries(environmentVariables)
 let services;
 
 function firebaseStartupError(message, error) {
-  if (import.meta.env.DEV && error?.code) return new Error(`${message} (${error.code})`);
-  return new Error(message);
+  const wrapped = new Error(import.meta.env.DEV && error?.code ? `${message} (${error.code})` : message);
+  wrapped.publicMessage = message;
+  wrapped.cause = error;
+  return wrapped;
 }
 
 function initializeOptionalAppCheck(app) {
@@ -48,7 +50,8 @@ function initializeOptionalAppCheck(app) {
   });
 }
 
-export function getFirebaseServices() {
+export function getFirebaseServices(diagnostics) {
+  diagnostics?.protect(...Object.values(firebaseConfig), import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY, import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN);
   if (missingVariables.length > 0) {
     throw new Error(import.meta.env.DEV
       ? `Falta configurar Firebase: ${missingVariables.join(', ')}. Copia .env.example a .env.local y completa sus valores.`

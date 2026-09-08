@@ -63,3 +63,5 @@ textarea { resize: vertical; min-height: 8rem; font-size: 1.15rem; line-height: 
   .speak-button.is-listening { animation: listening-pulse 1.6s ease-in-out infinite; }
   @keyframes listening-pulse { 50% { transform: scale(1.03); } }
 }
+
+.tv-diagnostics { position: absolute; z-index: 3; bottom: 0; left: 2%; width: 96%; max-height: 45vh; overflow: auto; margin: 0; padding: 0.7rem; border: 1px solid white; background: black; color: white; font: 16px/1.35 monospace; white-space: pre-wrap; overflow-wrap: break-word; text-align: left; }

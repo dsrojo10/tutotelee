@@ -177,3 +177,15 @@ Sin la site key la aplicación sigue funcionando exactamente como antes. App Che
 - Solo se admite un celular por TV. No hay cuentas permanentes, historial, almacenamiento de audio ni recuperación de una conversación.
 - El reconocimiento de voz depende del navegador, sus permisos, HTTPS, conexión y servicios del proveedor. Los Smart TV solo muestran texto y no requieren soporte de voz.
 - El tamaño del texto prioriza pocas líneas muy grandes. Las frases se limitan a 500 caracteres y el exceso visual se recorta en el TV en lugar de habilitar scroll.
+
+## Diagnóstico temporal del Smart TV
+
+Abre `https://dsrojo10.github.io/tutotelee/tv.html?debug=1` después de publicar este build, o añade `?debug=1` a la URL del TV en el entorno que estés probando. Solo ese parámetro activa el diagnóstico; retíralo para volver a la pantalla habitual. No activa el modo debug de Firebase App Check.
+
+Al ocurrir un error aparece un panel pequeño de alto contraste, desplazable y accesible con teclado. Muestra navegador, plataforma, reloj, disponibilidad de APIs, resultado de autenticación anónima (sin UID), presencia mediante `.info/connected`, lectura de `.info/serverTimeOffset`, `localNow`, `serverNow`, `offset` y `localMinusServer` (local menos servidor, en ms). La disponibilidad de localStorage comprueba acceso y lectura con captura de excepciones; no escribe datos ni garantiza persistencia.
+
+Las etapas de inicio son `firebase-init`, `anonymous-auth`, `server-time`, `create-session`, `create-pairing` y `onDisconnect`. Los errores posteriores del observador de sesión se identifican como `session-listener`. El panel conserva code, name y message de la causa interna, redactando configuración, identificadores, códigos, URL y posibles credenciales. No guarda ni envía el diagnóstico. Si falla el reloj del servidor, muestra el fallo y valores desconocidos; la aplicación conserva su fallback al reloj local. Un error posterior no borra el diagnóstico de ese fallo de reloj.
+
+Sin `?debug=1` no se recopila ni se muestra el panel ni se añade el observador de presencia. Los mensajes de producción siguen siendo genéricos. No cambian reglas, arquitectura, expiraciones ni escrituras.
+
+El target no está fijado en `vite.config.js`: la versión instalada de Vite resuelve su valor predeterminado `baseline-widely-available` a Chrome 107, Edge 107, Firefox 104 y Safari 16. No se ha modificado. El bundle conserva sintaxis moderna y depende de APIs del navegador sin añadir polyfills generales. Si el navegador no logra interpretar o cargar el módulo inicial, este panel tampoco podrá ejecutarse; el fallo reportado actualmente sí alcanza el flujo de creación de sesión.

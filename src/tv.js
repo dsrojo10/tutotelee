@@ -1,8 +1,12 @@
 import './styles.css';
-import { onValue, remove } from 'firebase/database';
+import { onValue, ref, remove } from 'firebase/database';
 import { formatPairingCode, isExpired } from './core.js';
 import { ensureAnonymousUser, getFirebaseServices } from './firebase.js';
 import { createTvSession, getServerNow } from './pairing.js';
+
+import { createTvDiagnostics } from './diagnostics.js';
+
+const diagnostics = createTvDiagnostics(window.location.search, document.querySelector('#tv-diagnostics'));
 
 const statusElement = document.querySelector('#tv-status');
 const pairingView = document.querySelector('#pairing-view');
@@ -41,11 +45,18 @@ function showConversation(session) {
 }
 
 function showError(error) {
+  diagnostics?.error(error);
   pairingView.hidden = true;
   textView.hidden = true;
   errorView.hidden = false;
   statusElement.textContent = 'Sin conexión';
-  errorDetail.textContent = error?.message || 'Revisa la conexión y vuelve a cargar la página.';
+  const knownMessages = [
+    'Falta completar la configuración de TutoTeLee.',
+    'Se necesita un generador aleatorio seguro.',
+    'No fue posible reservar un código. Intenta recargar la página.',
+  ];
+  errorDetail.textContent = error?.publicMessage
+    || (knownMessages.includes(error?.message) ? error.message : 'Revisa la conexión y vuelve a cargar la página.');
 }
 
 async function cleanActiveSession() {
@@ -68,10 +79,10 @@ async function restartPairing(database, tvUid) {
     await cleanActiveSession();
     hasConnected = false;
     statusElement.textContent = 'Creando un código nuevo…';
-    activeSession = await createTvSession(database, tvUid);
+    activeSession = await createTvSession(database, tvUid, diagnostics);
     showPairing(activeSession.code);
 
-    const delay = Math.max(0, activeSession.expiresAt - (await getServerNow(database)));
+    const delay = Math.max(0, activeSession.expiresAt - (await getServerNow(database, diagnostics)));
     expiryTimer = window.setTimeout(() => restartPairing(database, tvUid), delay + 100);
 
     unsubscribeSession = onValue(
@@ -95,7 +106,10 @@ async function restartPairing(database, tvUid) {
           restartPairing(database, tvUid);
         }
       },
-      showError,
+      error => {
+        diagnostics?.stage('session-listener');
+        showError(error);
+      },
     );
   } catch (error) {
     showError(error);
@@ -106,8 +120,26 @@ async function restartPairing(database, tvUid) {
 
 async function start() {
   try {
-    const { database } = getFirebaseServices();
+    diagnostics?.stage('firebase-init');
+    const { database } = getFirebaseServices(diagnostics);
+    if (diagnostics) {
+      try {
+        const unsubscribe = onValue(ref(database, '.info/connected'),
+          snapshot => diagnostics.update({ connected: snapshot.val() }),
+          error => {
+            diagnostics.update({ connected: 'error de lectura' });
+            diagnostics.error(error, '.info/connected');
+          });
+        window.addEventListener('pagehide', unsubscribe, { once: true });
+      } catch (error) {
+        diagnostics.update({ connected: 'error al observar' });
+        diagnostics.error(error, '.info/connected');
+      }
+    }
+    diagnostics?.stage('anonymous-auth');
     const user = await ensureAnonymousUser();
+    diagnostics?.protect(user.uid);
+    diagnostics?.update({ auth: user.isAnonymous ? 'ok' : 'usuario existente no anónimo' });
     await restartPairing(database, user.uid);
   } catch (error) {
     showError(error);
