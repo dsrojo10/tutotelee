@@ -1,3 +1,5 @@
+import { getServerNow } from './clock.js';
+export { getServerNow } from './clock.js';
 import {
   get,
   onDisconnect,
@@ -10,6 +12,7 @@ import {
 } from 'firebase/database';
 import {
   canClaimPairing,
+  calculateExpiresAt,
   generatePairingCode,
   generateSessionId,
   isExpired,
@@ -59,29 +62,13 @@ function sessionClaimError(problem) {
   }
 }
 
-export async function getServerNow(database, diagnostics) {
-  diagnostics?.stage('server-time');
-  try {
-    const snapshot = await get(ref(database, '.info/serverTimeOffset'));
-    const localNow = Date.now();
-    const offset = snapshot.val() || 0;
-    diagnostics?.update({ serverTimeOffset: snapshot.val(), localNow, serverNow: localNow + offset, offset, localMinusServer: -offset });
-    return localNow + offset;
-  } catch (error) {
-    const localNow = Date.now();
-    diagnostics?.update({ serverTimeOffset: 'falló; fallback local', localNow, serverNow: 'desconocido', offset: 'desconocido', localMinusServer: 'desconocido' });
-    diagnostics?.error(error, 'server-time');
-    return localNow;
-  }
-}
-
 export async function createTvSession(database, tvUid, diagnostics) {
   diagnostics?.stage('create-session');
   diagnostics?.protect(tvUid);
   const sessionId = generateSessionId();
   diagnostics?.protect(sessionId);
   const sessionRef = ref(database, `sessions/${sessionId}`);
-  const now = await getServerNow(database, diagnostics);
+  const clock = await getServerNow(database, diagnostics);
 
   try {
     diagnostics?.stage('create-session');
@@ -93,7 +80,7 @@ export async function createTvSession(database, tvUid, diagnostics) {
       isFinal: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      expiresAt: now + SESSION_TTL_MS,
+      expiresAt: calculateExpiresAt(clock, SESSION_TTL_MS),
     });
   } catch (error) {
     throw userFacingFirebaseError('No fue posible crear la sesión del TV. Intenta recargar la página.', error);
@@ -104,8 +91,9 @@ export async function createTvSession(database, tvUid, diagnostics) {
     const code = generatePairingCode();
     diagnostics?.protect(code);
     const pairingRef = ref(database, `pairings/${code}`);
-    const pairingNow = await getServerNow(database, diagnostics);
-    const expiresAt = pairingNow + PAIRING_TTL_MS;
+    const pairingClock = await getServerNow(database, diagnostics);
+    const pairingNow = pairingClock.now;
+    const expiresAt = calculateExpiresAt(pairingClock, PAIRING_TTL_MS);
     let result;
     try {
       diagnostics?.stage('create-pairing');
@@ -165,7 +153,7 @@ export async function claimSession(database, rawCode, phoneUid) {
     throw userFacingFirebaseError('No se pudo consultar el TV. Revisa la conexión e intenta de nuevo.', error);
   }
   const pairing = pairingSnapshot.val();
-  const now = await getServerNow(database);
+  const { now } = await getServerNow(database);
 
   if (!pairing || !pairing.sessionId) throw new Error('El código no existe o ya fue utilizado.');
   if (isExpired(pairing.expiresAt, now)) {
@@ -216,7 +204,7 @@ export async function claimSession(database, rawCode, phoneUid) {
     await update(sessionRef, {
       connected: true,
       updatedAt: serverTimestamp(),
-      expiresAt: (await getServerNow(database)) + SESSION_TTL_MS,
+      expiresAt: calculateExpiresAt(await getServerNow(database), SESSION_TTL_MS),
     });
   } catch (error) {
     await disconnectOperation.cancel().catch(() => {});

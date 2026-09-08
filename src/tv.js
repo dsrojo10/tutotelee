@@ -82,7 +82,7 @@ async function restartPairing(database, tvUid) {
     activeSession = await createTvSession(database, tvUid, diagnostics);
     showPairing(activeSession.code);
 
-    const delay = Math.max(0, activeSession.expiresAt - (await getServerNow(database, diagnostics)));
+    const delay = Math.max(0, activeSession.expiresAt - (await getServerNow(database, diagnostics)).now);
     expiryTimer = window.setTimeout(() => restartPairing(database, tvUid), delay + 100);
 
     unsubscribeSession = onValue(

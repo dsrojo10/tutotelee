@@ -5,7 +5,9 @@ import {
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import { get, ref, runTransaction, set, update } from 'firebase/database';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+
+import { calculateExpiresAt, PAIRING_TTL_MS, SESSION_TTL_MS } from '../../src/core.js';
 
 const PROJECT_ID = 'demo-tutotelee';
 const TV_UID = 'tv-owner';
@@ -175,5 +177,25 @@ describe('reglas de sessions', () => {
     const attackerDatabase = databaseFor(OTHER_PHONE_UID);
     await assertFails(get(ref(attackerDatabase, `sessions/${SESSION_ID}`)));
     await assertFails(update(ref(attackerDatabase, `sessions/${SESSION_ID}`), { currentText: 'Ataque' }));
+  });
+});
+
+
+describe('borde de expiración con reloj local adelantado', () => {
+  it.each([
+    ['sesión', SESSION_TTL_MS],
+    ['pairing', PAIRING_TTL_MS],
+  ])('rechaza TTL exacto de %s y acepta fallback con margen', async (kind, ttl) => {
+    const database = databaseFor(TV_UID);
+    if (kind === 'pairing') await seed(`sessions/${SESSION_ID}`, sessionData());
+    // 30s avoids a race with test execution while representing a modest client skew.
+    const clock = { now: Date.now() + 30_000, source: 'local-fallback' };
+    const path = kind === 'sesión' ? `sessions/${SESSION_ID}` : `pairings/${CODE}`;
+    const payload = expiresAt => kind === 'sesión'
+      ? sessionData(TV_UID, { expiresAt })
+      : pairingData(SESSION_ID, TV_UID, { expiresAt });
+    const rejected = await assertFails(set(ref(database, path), payload(clock.now + ttl)));
+    expect(rejected.code).toBe('PERMISSION_DENIED');
+    await assertSucceeds(set(ref(database, path), payload(calculateExpiresAt(clock, ttl))));
   });
 });

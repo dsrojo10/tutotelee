@@ -1,5 +1,13 @@
 export const PAIRING_TTL_MS = 10 * 60 * 1000;
 export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+// Only the local fallback shortens TTLs: tolerate a client up to 60 seconds ahead.
+// This is not a correction for arbitrary clock errors; rules retain their original limits.
+export const CLOCK_SKEW_SAFETY_MS = 60_000;
+
+export function calculateExpiresAt(clock, ttl) {
+  return clock.now + ttl - (clock.source === 'local-fallback' ? CLOCK_SKEW_SAFETY_MS : 0);
+}
+
 export const MAX_TEXT_LENGTH = 500;
 
 export function isValidPairingCode(value) {

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run tests/core.test.js tests/pairing.test.js tests/diagnostics.test.js",
+    "test": "vitest run tests/core.test.js tests/pairing.test.js tests/diagnostics.test.js tests/clock.test.js",
     "test:rules": "firebase emulators:exec --only database --project demo-tutotelee \"vitest run tests/rules/database.rules.test.js\"",
     "test:all": "npm test && npm run test:rules"
   },

@@ -23,7 +23,7 @@ export function createTvDiagnostics(search, element, environment = window) {
   if (!debugEnabled(search)) return undefined;
   const state = {
     stage: 'firebase-init', auth: 'pendiente', connected: 'pendiente',
-    serverTimeOffset: 'pendiente', localNow: Date.now(), serverNow: 'desconocido',
+    serverTimeSource: 'pendiente', serverTimeOffset: 'pendiente', localNow: Date.now(), serverNow: 'desconocido',
     offset: 'desconocido', localMinusServer: 'desconocido',
   };
   const secrets = [];

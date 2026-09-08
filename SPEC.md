@@ -82,6 +82,8 @@ Los controles principales deben ser grandes, claros y fáciles de utilizar en un
 - Considerar cierres de pestañas, pérdida de red y otras desconexiones inesperadas. Las pantallas deben mostrar un estado comprensible y permitir recuperar o reiniciar el flujo sin conservar conversaciones.
 - Las sesiones y códigos abandonados deben tener fecha de expiración. La implementación debe impedir su uso tras expirar y eliminarlos mediante un mecanismo de limpieza compatible con la arquitectura sin servidor propio.
 - Usar timestamps confiables de Firebase para validar la vigencia y mecanismos de presencia/desconexión de Realtime Database cuando correspondan.
+- Leer `.info/serverTimeOffset` con `onValue` modular como lectura one-shot: primer número finito válido, timeout de 5 segundos y limpieza del listener en éxito, error o timeout.
+- Calcular expiraciones de sesión (incluida activación desde celular) y pairing con TTL normal si se obtuvo offset; con fallback local restar un margen de 60 segundos (`CLOCK_SKEW_SAFETY_MS`). Mantener los límites actuales de reglas (12 horas y 10 minutos), sin prometer tolerancia a desfases arbitrarios.
 
 ## 7. Arquitectura técnica
 
@@ -140,7 +142,7 @@ El MVP está implementado con dos entradas (`index.html` y `tv.html`), sincroniz
 ## 12. Diagnóstico temporal y explícito del TV
 
 - Únicamente `debug=1` como parámetro de la URL del TV habilita un panel de diagnóstico cuando ocurre un error.
-- Mostrar entorno del navegador, disponibilidad de APIs, autenticación sin UID, presencia de Realtime Database, reloj local, offset, hora estimada del servidor y diferencia local menos servidor.
+- Mostrar entorno del navegador, disponibilidad de APIs, autenticación sin UID, presencia de Realtime Database, fuente del reloj (`server-offset` o `local-fallback`), reloj local, offset, hora estimada del servidor y diferencia local menos servidor.
 - Distinguir fallos de inicialización de Firebase, autenticación, lectura del reloj, escritura de sesión, transacción de pairing y onDisconnect, conservando la causa interna y mostrando code, name y message redactado solo en debug.
 - Mantener visible el fallo de lectura del reloj aunque se use el fallback local o falle una operación posterior.
 - Nunca mostrar configuración completa, API key, tokens, credenciales, UID, sessionId ni códigos adicionales. No almacenar ni transmitir diagnósticos.
