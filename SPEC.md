@@ -19,7 +19,7 @@ El MVP debe resolver este flujo de forma directa, accesible y sin historial de c
 7. El celular muestra un botón grande **HABLAR** y los controles de texto.
 8. Cuando el usuario habla, el celular convierte la voz a texto.
 9. Los resultados intermedios y finales aparecen casi en tiempo real en el TV.
-10. Cada nueva frase reemplaza por completo la anterior.
+10. El texto manual reemplaza por completo el anterior. La voz experimental muestra una ventana breve de contexto que prioriza lo más reciente.
 11. El celular también permite escribir y enviar texto manualmente.
 12. El celular permite borrar el texto mostrado en el TV.
 13. El celular puede desconectarse de forma explícita y ambas pantallas deben reflejar el cambio.
@@ -62,7 +62,13 @@ Los controles principales deben ser grandes, claros y fáciles de utilizar en un
 - Usar inicialmente el idioma `es-CO`.
 - Mostrar la vista previa en el celular.
 - Enviar resultados intermedios al TV para reducir la latencia percibida.
-- Enviar y conservar únicamente el texto correspondiente a la frase actual; una nueva frase reemplaza la anterior.
+- En la rama experimental de voz, conservar hasta cuatro segmentos finales recientes y el interim actual, separados conceptualmente del estado de escucha. Los finales proceden de los resultados finales de SpeechRecognition, sin análisis lingüístico adicional.
+- La ventana de voz tiene un máximo de 420 caracteres (`VOICE_WINDOW_MAX_CHARS`), incluidos separadores. Eliminar primero segmentos finales antiguos cuando se supere el límite; el interim tiene prioridad sobre todo contexto final. No recuperar segmentos ya descartados.
+- Si un segmento o interim por sí solo supera el límite, conservar su parte final, cortando por palabra cuando sea posible. Una palabra sin separadores puede recortarse para respetar el límite.
+- Las pausas no borran los finales recientes. Un fin normal del reconocedor permite reinicio automático mientras el usuario quiera escuchar, con espera inicial de 750 ms e incremento hasta 2250 ms; detener después de tres reinicios consecutivos sin resultados no vacíos.
+- Usar una única instancia de reconocimiento y un único timer de reinicio. No reiniciar tras DETENER ni errores fatales, incluidos permisos denegados. Solo `no-speech`, `network` y `aborted` permiten recuperación tras `end`.
+- Limpiar contexto, interim y timer al detener, borrar TV, desconectar, terminar la sesión o salir de la página. Una nueva activación manual de HABLAR empieza con contexto vacío.
+- El texto manual mantiene la normalización actual, saltos de línea y límite de 500 caracteres. No modificar el tamaño de letra ni añadir scroll en TV para ampliar la ventana.
 - Mantener siempre disponible la entrada manual de texto.
 - Si el reconocimiento no está disponible, informarlo claramente y recomendar el dictado del teclado del celular como alternativa.
 - No grabar, almacenar ni enviar audio a Firebase. El TV recibe únicamente texto.
@@ -105,7 +111,7 @@ La implementación concreta del esquema de datos puede evolucionar, siempre que 
 
 - No guardar audio.
 - El TV recibe únicamente texto.
-- No almacenar historial de transcripciones ni frases anteriores.
+- No almacenar un historial de transcripciones. La voz mantiene únicamente el contexto breve de la ventana actual, sin archivo de segmentos descartados.
 - No incluir claves privadas, credenciales administrativas ni otros secretos en el frontend.
 - Configurar Firebase Realtime Database con reglas *deny-by-default*.
 - Autorizar cada lectura y escritura explícitamente según la identidad anónima, la pertenencia a la sesión, el estado y la expiración.

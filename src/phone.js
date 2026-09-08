@@ -1,5 +1,6 @@
 import './styles.css';
 import { onValue } from 'firebase/database';
+import { createVoiceRecognition } from './voice-recognition.js';
 import { normalizeText } from './core.js';
 import { ensureAnonymousUser, getFirebaseServices } from './firebase.js';
 import { claimSession, disconnectPhone, sendCurrentText } from './pairing.js';
@@ -20,7 +21,7 @@ const appMessage = document.querySelector('#app-message');
 
 const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition;
-let listening = false;
+let voice;
 let activeSession;
 let unsubscribeSession;
 let user;
@@ -41,7 +42,6 @@ function setBusy(isBusy) {
 }
 
 function setListening(value) {
-  listening = value;
   speakButton.classList.toggle('is-listening', value);
   speakButton.setAttribute('aria-pressed', String(value));
   speakButton.textContent = value ? 'DETENER' : 'HABLAR';
@@ -90,29 +90,20 @@ function configureRecognition() {
   recognition.interimResults = true;
   recognition.continuous = true;
 
-  recognition.addEventListener('start', () => setListening(true));
-  recognition.addEventListener('end', () => setListening(false));
-  recognition.addEventListener('result', (event) => {
-    const latest = event.results[event.results.length - 1];
-    publishSpeech(latest[0]?.transcript || '', latest.isFinal);
-  });
-  recognition.addEventListener('error', (event) => {
-    setListening(false);
-    if (event.error === 'aborted' || event.error === 'no-speech') {
-      setMessage(event.error === 'no-speech' ? 'No se detectó voz. Pulsa HABLAR para intentar de nuevo.' : '');
-      return;
-    }
-    const permissionMessage = event.error === 'not-allowed'
-      ? 'El navegador no tiene permiso para usar el micrófono.'
-      : `El reconocimiento de voz se detuvo (${event.error}). Puedes usar el texto manual.`;
-    setMessage(permissionMessage, true);
+  voice = createVoiceRecognition(recognition, {
+    onText: publishSpeech,
+    onListening: setListening,
+    onError: error => {
+      const denied = ['not-allowed', 'service-not-allowed', 'permission-denied'].includes(error);
+      setMessage(denied
+        ? 'El navegador no tiene permiso para usar el micrófono.'
+        : 'El reconocimiento se detuvo. Pulsa HABLAR para reintentar o usa el texto manual.', true);
+    },
   });
 }
 
 function stopRecognition() {
-  if (!recognition || !listening) return;
-  recognition.stop();
-  setListening(false);
+  voice?.stop();
 }
 
 async function leaveSession(message = '') {
@@ -152,18 +143,10 @@ codeInput.addEventListener('input', () => {
 });
 
 speakButton.addEventListener('click', () => {
-  if (!recognition) return;
+  if (!voice || !activeSession) return;
   setMessage('');
-  if (listening) {
-    stopRecognition();
-    return;
-  }
-  try {
-    recognition.start();
-  } catch {
-    setListening(false);
-    setMessage('No se pudo iniciar el reconocimiento. Espera un momento e intenta de nuevo.', true);
-  }
+  if (voice.userWantsListening) stopRecognition();
+  else voice.start();
 });
 
 manualForm.addEventListener('submit', async (event) => {
@@ -184,6 +167,7 @@ manualForm.addEventListener('submit', async (event) => {
 });
 
 clearButton.addEventListener('click', async () => {
+  stopRecognition();
   try {
     await sendCurrentText(activeSession.sessionRef, '', true);
     speechPreview.textContent = 'Aquí aparecerá lo que dices.';
@@ -195,6 +179,8 @@ clearButton.addEventListener('click', async () => {
 });
 
 disconnectButton.addEventListener('click', () => leaveSession());
+
+window.addEventListener('pagehide', stopRecognition);
 
 configureRecognition();
 explainSpeechSupport();
