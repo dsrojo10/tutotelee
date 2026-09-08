@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { claimPhoneUid, classifySessionState } from '../src/pairing.js';
+import { claimPhoneUid, classifySessionState, releaseOwnedPhoneUid } from '../src/pairing.js';
 
 const now = 1_000;
 const availableSession = {
@@ -39,5 +39,10 @@ describe('estado de reclamación de una sesión', () => {
 
   it('impide reemplazar atómicamente un phoneUid existente', () => {
     expect(claimPhoneUid('first-phone', 'second-phone')).toBeUndefined();
+  });
+
+  it('libera el claim durante rollback solo si todavía pertenece al mismo celular', () => {
+    expect(releaseOwnedPhoneUid('phone-owner', 'phone-owner')).toBeNull();
+    expect(releaseOwnedPhoneUid('other-phone', 'phone-owner')).toBeUndefined();
   });
 });

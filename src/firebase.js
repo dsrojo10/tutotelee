@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { getDatabase } from 'firebase/database';
 
@@ -28,16 +29,40 @@ const missingVariables = Object.entries(environmentVariables)
 
 let services;
 
+function firebaseStartupError(message, error) {
+  if (import.meta.env.DEV && error?.code) return new Error(`${message} (${error.code})`);
+  return new Error(message);
+}
+
+function initializeOptionalAppCheck(app) {
+  const siteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY;
+  if (!siteKey) return null;
+
+  if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN) {
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN;
+  }
+
+  return initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(siteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 export function getFirebaseServices() {
   if (missingVariables.length > 0) {
-    throw new Error(
-      `Falta configurar Firebase: ${missingVariables.join(', ')}. Copia .env.example a .env.local y completa sus valores.`,
-    );
+    throw new Error(import.meta.env.DEV
+      ? `Falta configurar Firebase: ${missingVariables.join(', ')}. Copia .env.example a .env.local y completa sus valores.`
+      : 'Falta completar la configuración de TutoTeLee.');
   }
 
   if (!services) {
-    const app = initializeApp(firebaseConfig);
-    services = { app, auth: getAuth(app), database: getDatabase(app) };
+    try {
+      const app = initializeApp(firebaseConfig);
+      const appCheck = initializeOptionalAppCheck(app);
+      services = { app, appCheck, auth: getAuth(app), database: getDatabase(app) };
+    } catch (error) {
+      throw firebaseStartupError('No fue posible iniciar Firebase. Revisa la configuración.', error);
+    }
   }
   return services;
 }
@@ -46,7 +71,11 @@ export async function ensureAnonymousUser() {
   const { auth } = getFirebaseServices();
   if (auth.currentUser) return auth.currentUser;
 
-  await signInAnonymously(auth);
+  try {
+    await signInAnonymously(auth);
+  } catch (error) {
+    throw firebaseStartupError('No fue posible iniciar la conexión segura. Intenta de nuevo.', error);
+  }
   return new Promise((resolve, reject) => {
     const unsubscribe = onAuthStateChanged(
       auth,
@@ -58,7 +87,7 @@ export async function ensureAnonymousUser() {
       },
       (error) => {
         unsubscribe();
-        reject(error);
+        reject(firebaseStartupError('No fue posible confirmar la conexión segura. Intenta de nuevo.', error));
       },
     );
   });

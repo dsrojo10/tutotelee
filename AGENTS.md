@@ -16,4 +16,4 @@ TutoTeLee es un proyecto familiar cuyo propósito es facilitar la comunicación 
 
 ## Alcance actual
 
-Por ahora el repositorio contiene únicamente documentación y estructura inicial. No se debe asumir que Vite, Firebase o la interfaz ya están implementados.
+El MVP está implementado con Vite, Firebase, las pantallas de celular y TV, pruebas unitarias y pruebas de reglas mediante Firebase Emulator. Antes de cambiar el comportamiento, revisar la implementación y mantener sincronizados `SPEC.md`, `README.md` y las reglas de seguridad.

@@ -7,7 +7,7 @@
       ".write": false,
       "$code": {
         ".read": "auth != null && $code.matches(/^[0-9]{6}$/)",
-        ".write": "auth != null && $code.matches(/^[0-9]{6}$/) && ((!data.exists() && newData.child('tvUid').val() === auth.uid && root.child('sessions').child(newData.child('sessionId').val()).child('tvUid').val() === auth.uid) || (data.exists() && !newData.exists() && (data.child('tvUid').val() === auth.uid || root.child('sessions').child(data.child('sessionId').val()).child('phoneUid').val() === auth.uid)))",
+        ".write": "auth != null && $code.matches(/^[0-9]{6}$/) && (((!data.exists() || data.child('expiresAt').val() < now) && newData.child('tvUid').val() === auth.uid && root.child('sessions').child(newData.child('sessionId').val()).child('tvUid').val() === auth.uid) || (data.exists() && !newData.exists() && (data.child('tvUid').val() === auth.uid || root.child('sessions').child(data.child('sessionId').val()).child('phoneUid').val() === auth.uid)))",
         ".validate": "!newData.exists() || (newData.hasChildren(['sessionId', 'tvUid', 'expiresAt', 'createdAt']) && newData.child('sessionId').isString() && newData.child('sessionId').val().matches(/^[a-f0-9]{32}$/) && newData.child('tvUid').isString() && newData.child('tvUid').val().length > 0 && newData.child('expiresAt').isNumber() && newData.child('expiresAt').val() > now && newData.child('expiresAt').val() <= now + 600000 && newData.child('createdAt').isNumber())",
         "sessionId": { ".validate": true },
         "tvUid": { ".validate": true },

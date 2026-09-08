@@ -35,6 +35,10 @@ export function isExpired(expiresAt, now = Date.now()) {
   return !Number.isFinite(expiresAt) || expiresAt <= now;
 }
 
+export function canClaimPairing(pairing, now = Date.now()) {
+  return pairing === null || (Number.isFinite(pairing?.expiresAt) && pairing.expiresAt < now);
+}
+
 export function normalizeText(value, maxLength = MAX_TEXT_LENGTH) {
   if (typeof value !== 'string') return '';
 

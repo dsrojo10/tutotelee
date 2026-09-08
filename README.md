@@ -58,10 +58,14 @@ Comandos disponibles:
 
 ```bash
 npm run dev      # servidor de desarrollo
-npm test         # pruebas automatizadas con Vitest
+npm test         # pruebas unitarias rápidas con Vitest
+npm run test:rules # reglas contra Realtime Database Emulator
+npm run test:all # pruebas unitarias y de reglas
 npm run build    # build de producción en dist/
 npm run preview  # vista previa del build
 ```
+
+Las pruebas de reglas requieren Java 21. `firebase-tools` se conserva como dependencia de desarrollo porque inicia el emulador local; las pruebas usan además el paquete oficial `@firebase/rules-unit-testing`. Ninguna prueba se conecta a un proyecto Firebase real. El workflow instala explícitamente esa versión de Java.
 
 ## Configurar Firebase
 
@@ -104,12 +108,12 @@ Las reglas son *deny-by-default*, exigen autenticación, validan códigos, IDs, 
 3. Introduce en el celular el código del TV.
 4. Comprueba texto manual, **BORRAR TV**, **DESCONECTAR** y un código nuevo.
 5. En un navegador compatible, concede permiso de micrófono y prueba resultados parciales y finales.
-6. Ejecuta `npm test` y `npm run build` antes de publicar.
+6. Ejecuta `npm run test:all` y `npm run build` antes de publicar.
 
 ## Publicar en GitHub Pages
 
 1. Crea un repositorio de GitHub (por ejemplo, `tutotelee`) y sube el proyecto a la rama `main`.
-2. En **Settings > Secrets and variables > Actions > Variables**, crea las siete variables `VITE_FIREBASE_*` mostradas arriba. La configuración del cliente Firebase es pública, por lo que se recomiendan **Variables**; el workflow ya las lee desde `vars`. Si tu política exige Secrets, cambia `vars.NOMBRE` por `secrets.NOMBRE` en el workflow.
+2. En **Settings > Secrets and variables > Actions > Variables**, crea las siete variables `VITE_FIREBASE_*` mostradas arriba. La configuración del cliente Firebase es pública, por lo que se recomiendan **Variables**; el workflow ya las lee desde `vars`. Si configuras App Check, agrega también `VITE_FIREBASE_APPCHECK_SITE_KEY`. Nunca configures el token de depuración como variable de Actions. Si tu política exige Secrets, cambia `vars.NOMBRE` por `secrets.NOMBRE` en el workflow.
 3. En **Settings > Pages > Build and deployment**, selecciona **GitHub Actions** como fuente.
 4. Haz push a `main` o ejecuta manualmente **Deploy to GitHub Pages** desde la pestaña Actions.
 
@@ -128,11 +132,47 @@ GitHub Pages publica la aplicación mediante HTTPS, lo que ayuda a satisfacer lo
 
 Según el navegador, la Web Speech API puede enviar audio a servicios del proveedor para convertirlo en texto. TutoTeLee no envía audio a Firebase, no lo almacena y el TV recibe únicamente texto.
 
+## Seguridad
+
+La configuración Web de Firebase se publica dentro del frontend por diseño y no es un secreto. Nunca debe incluir credenciales administrativas. La protección real depende de Firebase Anonymous Authentication, las reglas de Realtime Database, App Check cuando se active y el monitoreo del proyecto.
+
+- Las reglas son *deny-by-default*, impiden listar `pairings` y `sessions`, validan los propietarios, la expiración, las transiciones y el texto de hasta 500 caracteres.
+- El `sessionId` usa 128 bits aleatorios. El código de seis dígitos solo descubre temporalmente una sesión y no debe tratarse como una contraseña fuerte.
+- Un pairing vigente no puede ser sobrescrito por otro TV. Un TV sí puede reclamar atómicamente un código cuyo pairing ya expiró.
+- Solo se conserva `currentText`; no existe historial y nunca se guarda audio.
+- La CSP de ambas páginas restringe scripts, conexiones, formularios, objetos y URL base a los orígenes necesarios para la aplicación y Firebase, sin `unsafe-eval`.
+
+Para verificar la política localmente:
+
+```bash
+npm run test:rules
+npm run test:all
+```
+
+### App Check opcional
+
+La integración con Firebase App Check está preparada, pero permanece inactiva mientras `VITE_FIREBASE_APPCHECK_SITE_KEY` esté vacío. Para activarla de forma controlada:
+
+1. En Firebase Console abre **App Check**, registra la aplicación Web y selecciona **reCAPTCHA Enterprise**.
+2. Crea o selecciona la clave de sitio para los dominios permitidos, incluido `USUARIO.github.io`, y copia únicamente la *site key* pública a `VITE_FIREBASE_APPCHECK_SITE_KEY` en `.env.local` y a la variable homónima de GitHub Actions.
+3. Publica primero sin enforcement, comprueba en **App Check > Métricas** que las solicitudes válidas llegan desde el celular y el TV, y prueba los navegadores objetivo.
+4. Cuando las métricas sean correctas, habilita manualmente enforcement para Realtime Database y, si corresponde en tu proyecto, Authentication. El frontend no activa enforcement.
+5. Para desarrollo local, genera un token de depuración siguiendo la documentación de App Check, regístralo en Firebase Console y colócalo solo en `VITE_FIREBASE_APPCHECK_DEBUG_TOKEN` dentro de `.env.local`. Nunca lo subas ni lo configures en GitHub Actions.
+
+Sin la site key la aplicación sigue funcionando exactamente como antes. App Check reduce abuso de clientes no oficiales, pero no sustituye las reglas ni constituye rate limiting fuerte.
+
+### Límites de la protección actual
+
+- Sin backend propio no existe rate limiting fuerte ni confirmación física en el TV; un atacante puede probar códigos individuales y abusar de Authentication anónima dentro de las cuotas de Firebase.
+- Realtime Database no elimina registros por TTL de forma garantizada. Las reglas impiden reclamar sesiones expiradas y los códigos expirados se pueden reutilizar, pero la eliminación física depende de los clientes o de mantenimiento administrativo.
+- Tras ganar `phoneUid`, el celular registra `onDisconnect` antes de activar la sesión. Sigue existiendo una ventana pequeña entre el commit del claim y el registro confirmado; el rollback comprueba el UID antes de liberar el claim, pero un cierre exacto en esa ventana puede dejar la sesión ocupada hasta expirar.
+- Una protección robusta contra *clickjacking* requiere el header HTTP `Content-Security-Policy: frame-ancestors ...` o `X-Frame-Options`. GitHub Pages no permite configurar esos headers y `frame-ancestors` no funciona mediante un `meta` CSP.
+
 ## Limitaciones conocidas del MVP
 
 - El código de 6 dígitos es un mecanismo de descubrimiento temporal, no una contraseña fuerte. Es apropiado para un entorno familiar de bajo riesgo.
 - Cualquier usuario anónimo que conozca un código vigente puede leer ese pairing exacto e intentar reclamarlo. La transacción garantiza un solo celular ganador, pero un frontend estático no puede verificar proximidad física.
-- Realtime Database no ofrece eliminación automática por TTL. Las reglas impiden usar datos expirados y los clientes realizan limpieza normal o por desconexión, pero una caída abrupta puede dejar registros expirados inaccesibles hasta una limpieza administrativa posterior.
+- Realtime Database no ofrece eliminación automática por TTL. Las reglas impiden usar sesiones expiradas, permiten reutilizar pairings expirados y los clientes realizan limpieza normal o por desconexión, pero una caída abrupta puede dejar registros antiguos hasta una limpieza administrativa posterior.
 - Las reglas impiden listar colecciones mediante Firebase, pero no pueden evitar que alguien pruebe códigos individuales. La ventana de 10 minutos, los 6 dígitos y el `sessionId` aleatorio reducen este riesgo sin convertir el MVP en un sistema de alta seguridad.
 - Solo se admite un celular por TV. No hay cuentas permanentes, historial, almacenamiento de audio ni recuperación de una conversación.
 - El reconocimiento de voz depende del navegador, sus permisos, HTTPS, conexión y servicios del proveedor. Los Smart TV solo muestran texto y no requieren soporte de voz.

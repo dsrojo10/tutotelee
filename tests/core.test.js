@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canClaimPairing,
   formatPairingCode,
   generatePairingCode,
   generateSessionId,
@@ -63,6 +64,25 @@ describe('expiración', () => {
     expect(isExpired(999, 1_000)).toBe(true);
   });
   it('considera inválida una expiración no numérica', () => expect(isExpired(undefined, 1_000)).toBe(true));
+});
+
+describe('reclamación de pairings', () => {
+  it('permite reclamar una ruta vacía', () => {
+    expect(canClaimPairing(null, 1_000)).toBe(true);
+  });
+
+  it('permite reemplazar un pairing estrictamente expirado', () => {
+    expect(canClaimPairing({ expiresAt: 999 }, 1_000)).toBe(true);
+  });
+
+  it('no sobrescribe un pairing vigente ni uno que vence justo ahora', () => {
+    expect(canClaimPairing({ expiresAt: 1_000 }, 1_000)).toBe(false);
+    expect(canClaimPairing({ expiresAt: 1_001 }, 1_000)).toBe(false);
+  });
+
+  it('no reemplaza datos malformados como si estuvieran expirados', () => {
+    expect(canClaimPairing({}, 1_000)).toBe(false);
+  });
 });
 
 describe('normalización del texto', () => {
