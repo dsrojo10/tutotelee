@@ -141,6 +141,7 @@ La configuración Web de Firebase se publica dentro del frontend por diseño y n
 - Un pairing vigente no puede ser sobrescrito por otro TV. Un TV sí puede reclamar atómicamente un código cuyo pairing ya expiró.
 - Solo se conserva `currentText`; no existe historial y nunca se guarda audio.
 - La CSP de ambas páginas restringe scripts, conexiones, formularios, objetos y URL base a los orígenes necesarios para la aplicación y Firebase, sin `unsafe-eval`.
+- RTDB usa WebSocket mediante `connect-src`. Su fallback long polling carga scripts `/.lp` y un iframe de desconexión, por lo que `script-src` y `frame-src` permiten además los orígenes exactos `https://tutotelee-default-rtdb.firebaseio.com` y `https://s-gke-usc1-nssi3-67.firebaseio.com` (backend asignado observado al conectar). No se añade ningún comodín ni permiso inline. Si Firebase cambia el backend asignado o se cambia de base de datos, revisar estos orígenes en `index.html` y `tv.html`; cambiar solo `VITE_FIREBASE_DATABASE_URL` no actualiza la CSP. Véase el [transporte de long polling del SDK](https://github.com/firebase/firebase-js-sdk/blob/main/packages/database/src/realtime/BrowserPollConnection.ts).
 
 Para verificar la política localmente:
 

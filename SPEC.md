@@ -107,6 +107,7 @@ La implementación concreta del esquema de datos puede evolucionar, siempre que 
 - El TV recibe únicamente texto.
 - No almacenar historial de transcripciones ni frases anteriores.
 - No incluir claves privadas, credenciales administrativas ni otros secretos en el frontend.
+- La CSP debe permitir los transportes RTDB del proyecto: WebSocket en `connect-src` y los orígenes exactos `https://tutotelee-default-rtdb.firebaseio.com` y `https://s-gke-usc1-nssi3-67.firebaseio.com` (backend asignado observado al conectar) en `script-src` y `frame-src` para scripts de long polling e iframe de desconexión, conservando las demás restricciones.
 - Configurar Firebase Realtime Database con reglas *deny-by-default*.
 - Autorizar cada lectura y escritura explícitamente según la identidad anónima, la pertenencia a la sesión, el estado y la expiración.
 - No permitir listar indiscriminadamente sesiones, códigos de emparejamiento ni su contenido. La consulta de un código debe ser directa y limitada al código exacto introducido.
