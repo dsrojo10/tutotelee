@@ -1,0 +1,45 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "pairings": {
+      ".read": false,
+      ".write": false,
+      "$code": {
+        ".read": "auth != null && $code.matches(/^[0-9]{6}$/)",
+        ".write": "auth != null && $code.matches(/^[0-9]{6}$/) && ((!data.exists() && newData.child('tvUid').val() === auth.uid && root.child('sessions').child(newData.child('sessionId').val()).child('tvUid').val() === auth.uid) || (data.exists() && !newData.exists() && (data.child('tvUid').val() === auth.uid || root.child('sessions').child(data.child('sessionId').val()).child('phoneUid').val() === auth.uid)))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['sessionId', 'tvUid', 'expiresAt', 'createdAt']) && newData.child('sessionId').isString() && newData.child('sessionId').val().matches(/^[a-f0-9]{32}$/) && newData.child('tvUid').isString() && newData.child('tvUid').val().length > 0 && newData.child('expiresAt').isNumber() && newData.child('expiresAt').val() > now && newData.child('expiresAt').val() <= now + 600000 && newData.child('createdAt').isNumber())",
+        "sessionId": { ".validate": true },
+        "tvUid": { ".validate": true },
+        "expiresAt": { ".validate": true },
+        "createdAt": { ".validate": true },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "sessions": {
+      ".read": false,
+      ".write": false,
+      "$sessionId": {
+        ".read": "auth != null && $sessionId.matches(/^[a-f0-9]{32}$/) && (data.child('tvUid').val() === auth.uid || data.child('phoneUid').val() === auth.uid || (!data.child('phoneUid').exists() && data.child('expiresAt').val() > now))",
+        ".write": "auth != null && $sessionId.matches(/^[a-f0-9]{32}$/) && ((!data.exists() && newData.child('tvUid').val() === auth.uid && !newData.child('phoneUid').exists() && newData.child('connected').val() === false) || (data.exists() && !newData.exists() && data.child('tvUid').val() === auth.uid) || (data.child('phoneUid').val() === auth.uid && newData.child('tvUid').val() === data.child('tvUid').val() && newData.child('phoneUid').val() === data.child('phoneUid').val() && (newData.child('expiresAt').val() === data.child('expiresAt').val() || (data.child('connected').val() === false && newData.child('connected').val() === true))))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['tvUid', 'connected', 'currentText', 'isFinal', 'createdAt', 'updatedAt', 'expiresAt']) && newData.child('tvUid').isString() && newData.child('tvUid').val().length > 0 && (!newData.child('phoneUid').exists() || (newData.child('phoneUid').isString() && newData.child('phoneUid').val().length > 0)) && newData.child('connected').isBoolean() && (newData.child('connected').val() === false || newData.child('phoneUid').exists()) && newData.child('currentText').isString() && newData.child('currentText').val().length <= 500 && newData.child('isFinal').isBoolean() && newData.child('createdAt').isNumber() && newData.child('updatedAt').isNumber() && newData.child('expiresAt').isNumber() && newData.child('expiresAt').val() > now && newData.child('expiresAt').val() <= now + 43200000)",
+        "tvUid": { ".validate": true },
+        "phoneUid": {
+          ".write": "auth != null && data.parent().child('tvUid').exists() && data.parent().child('connected').val() === false && ((!data.exists() && data.parent().child('expiresAt').val() > now && newData.isString() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()))",
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().length > 0)"
+        },
+        "connected": { ".validate": true },
+        "currentText": { ".validate": true },
+        "isFinal": { ".validate": true },
+        "createdAt": { ".validate": true },
+        "updatedAt": { ".validate": true },
+        "expiresAt": { ".validate": true },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

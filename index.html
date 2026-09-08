@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fff8ed" />
+    <meta name="description" content="Usa tu celular para mostrar voz o texto en TutoTeLee TV." />
+    <title>TutoTeLee · Celular</title>
+    <script type="module" src="/src/phone.js"></script>
+  </head>
+  <body class="phone-page">
+    <main class="phone-shell">
+      <header class="phone-header">
+        <h1>TutoTeLee</h1>
+        <p>Habla o escribe para que te lean en el TV.</p>
+      </header>
+
+      <section id="setup-panel" class="card" aria-labelledby="connect-title">
+        <h2 id="connect-title">Conectar con el TV</h2>
+        <form id="connect-form" novalidate>
+          <label for="pairing-code">Código de 6 dígitos</label>
+          <input
+            id="pairing-code"
+            class="code-input"
+            name="pairing-code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            aria-describedby="connect-help"
+            required
+          />
+          <p id="connect-help" class="help">Escribe el código grande que aparece en el TV.</p>
+          <button id="connect-button" class="button button-primary" type="submit">CONECTAR</button>
+        </form>
+      </section>
+
+      <section id="conversation-panel" class="card" aria-labelledby="conversation-title" hidden>
+        <div class="connection-line">
+          <span class="status-dot" aria-hidden="true"></span>
+          <h2 id="conversation-title">Conectado al TV</h2>
+        </div>
+
+        <button id="speak-button" class="speak-button" type="button" aria-pressed="false">
+          HABLAR
+        </button>
+        <p id="speech-help" class="help" aria-live="polite">Pulsa para comenzar a hablar.</p>
+
+        <div class="preview-box" aria-live="polite" aria-atomic="true">
+          <span class="preview-label">Vista previa</span>
+          <p id="speech-preview">Aquí aparecerá lo que dices.</p>
+        </div>
+
+        <form id="manual-form">
+          <label for="manual-text">Texto manual</label>
+          <textarea
+            id="manual-text"
+            rows="3"
+            maxlength="500"
+            placeholder="Escribe aquí o usa el dictado del teclado…"
+          ></textarea>
+          <button class="button button-primary" type="submit">MOSTRAR EN TV</button>
+        </form>
+
+        <div class="secondary-actions">
+          <button id="clear-button" class="button button-secondary" type="button">BORRAR TV</button>
+          <button id="disconnect-button" class="button button-danger" type="button">DESCONECTAR</button>
+        </div>
+      </section>
+
+      <p id="app-message" class="app-message" role="status" aria-live="assertive"></p>
+      <noscript>Necesitas activar JavaScript para usar TutoTeLee.</noscript>
+    </main>
+  </body>
+</html>
