@@ -23,11 +23,11 @@ button:disabled { cursor: not-allowed; opacity: 0.58; }
 .phone-page { margin: 0; min-width: 320px; min-height: 100vh; background: #fff8ed; }
 .phone-shell { width: min(100% - 2rem, 42rem); margin: 0 auto; padding: 2.25rem 0 3.5rem; }
 .phone-header { text-align: center; margin-bottom: 1.8rem; }
-.brand-lockup { display: inline-flex; align-items: center; justify-content: center; gap: .7rem; }
-.brand-mark { width: 4.2rem; height: 4.2rem; object-fit: contain; }
+.brand-lockup { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; }
+.brand-mark { width: 4rem; height: 4rem; object-fit: contain; }
 .phone-header h1 { margin: 0; color: #8f3f25; font-size: clamp(2.4rem, 12vw, 4rem); line-height: 1; letter-spacing: -.03em; }
 .phone-header p { max-width: 30rem; margin: .85rem auto 0; color: var(--muted); font-size: 1.15rem; line-height: 1.45; }
-.card { padding: clamp(1.3rem, 5vw, 2rem); border: 3px solid var(--line); border-radius: 1.25rem; background: #fff; box-shadow: 0 6px 0 #e8cda9; }
+.card { padding: clamp(1.3rem, 5vw, 2rem); border: 3px solid var(--line); border-radius: 1.15rem; background: #fff; box-shadow: 0 4px 0 #ead4b7; }
 .card h2 { margin: 0 0 1.25rem; font-size: 1.55rem; }
 label { display: block; margin-bottom: 0.55rem; font-size: 1.1rem; font-weight: 750; }
 input, textarea { width: 100%; border: 3px solid #55483f; border-radius: 0.8rem; background: #fff; color: #17130f; padding: 1rem; }
@@ -53,9 +53,9 @@ textarea { resize: vertical; min-height: 8rem; font-size: 1.15rem; line-height: 
 
 .tv-page { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: #000; color: #fff; }
 .tv-shell { position: relative; width: 100%; height: 100%; padding: clamp(1rem, 2.5vw, 2.5rem); background: #080909; }
-.tv-brand { position: absolute; z-index: 2; top: clamp(1rem, 2vw, 1.5rem); right: clamp(1rem, 2.5vw, 2.5rem); display: flex; align-items: center; gap: .5rem; color: #f5d28a; font-size: clamp(1.1rem, 2vw, 1.8rem); font-weight: 800; letter-spacing: .01em; }
+.tv-brand { position: absolute; z-index: 2; top: clamp(1rem, 2.5vw, 1.75rem); right: clamp(1rem, 2.5vw, 2.5rem); display: flex; align-items: center; gap: .45rem; color: #f5d28a; font-size: clamp(1.05rem, 1.8vw, 1.65rem); font-weight: 800; letter-spacing: .01em; }
 .tv-brand-mark { width: clamp(2rem, 4vw, 3.5rem); height: clamp(2rem, 4vw, 3.5rem); object-fit: contain; }
-.tv-status { position: absolute; z-index: 2; top: clamp(1rem, 2vw, 1.5rem); left: clamp(1rem, 2.5vw, 2.5rem); margin: 0; color: #f3f3f3; font-size: clamp(1rem, 1.8vw, 1.6rem); font-weight: 700; letter-spacing: 0.02em; }
+.tv-status { position: absolute; z-index: 2; top: clamp(1.2rem, 2.7vw, 1.9rem); left: clamp(1rem, 2.5vw, 2.5rem); margin: 0; color: #c8c8c8; font-size: clamp(.9rem, 1.45vw, 1.3rem); font-weight: 650; letter-spacing: 0.02em; }
 .tv-view { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
 .tv-heading { margin: 0 0 clamp(1rem, 4vh, 3rem); color: #fff5df; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.15; }
 .tv-code { margin: 0; font-size: clamp(6rem, 24vw, 20rem); font-weight: 900; line-height: 0.9; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -69,7 +69,7 @@ textarea { resize: vertical; min-height: 8rem; font-size: 1.15rem; line-height: 
 .noscript-message { display: block; margin-top: 1rem; }
 
 @media (max-width: 33.99rem) {
-  .brand-mark { width: 3.5rem; height: 3.5rem; }
+  .brand-mark { width: 3.4rem; height: 3.4rem; }
   .phone-shell { width: min(100% - 1.25rem, 42rem); padding-top: 1.5rem; }
 }
 
