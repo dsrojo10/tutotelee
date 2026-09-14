@@ -50,11 +50,12 @@ textarea { resize: vertical; min-height: 8rem; font-size: 1.15rem; line-height: 
 .secondary-actions { display: grid; grid-template-columns: 1fr; gap: 0.8rem; margin-top: 1.5rem; }
 .app-message { min-height: 1.6rem; margin: 1.2rem 0 0; padding: 0 0.25rem; font-weight: 750; line-height: 1.4; }
 .app-message.is-error { color: #86231e; }
+.creator-credit { margin: 2rem 0 0; color: #76695c; font-size: .9rem; text-align: center; }
 
 .tv-page { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: #000; color: #fff; }
 .tv-shell { position: relative; width: 100%; height: 100%; padding: clamp(1rem, 2.5vw, 2.5rem); background: #080909; }
-.tv-brand { position: absolute; z-index: 2; top: clamp(1rem, 2.5vw, 1.75rem); right: clamp(1rem, 2.5vw, 2.5rem); display: flex; align-items: center; gap: .45rem; color: #f5d28a; font-size: clamp(1.25rem, 2.1vw, 1.95rem); font-weight: 800; letter-spacing: .01em; }
-.tv-brand-mark { width: clamp(2.4rem, 4.7vw, 4.2rem); height: clamp(2.4rem, 4.7vw, 4.2rem); object-fit: contain; }
+.tv-brand { position: absolute; z-index: 2; top: clamp(1rem, 2.5vw, 1.75rem); right: clamp(1rem, 2.5vw, 2.5rem); display: flex; align-items: center; gap: .45rem; color: #f5d28a; font-size: clamp(1.45rem, 2.4vw, 2.25rem); font-weight: 800; letter-spacing: .01em; }
+.tv-brand-mark { width: clamp(2.8rem, 5.5vw, 4.9rem); height: clamp(2.8rem, 5.5vw, 4.9rem); object-fit: contain; }
 .tv-status { position: absolute; z-index: 2; top: clamp(1.2rem, 2.7vw, 1.9rem); left: clamp(1rem, 2.5vw, 2.5rem); margin: 0; color: #c8c8c8; font-size: clamp(.9rem, 1.45vw, 1.3rem); font-weight: 650; letter-spacing: 0.02em; }
 .tv-view { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; text-align: center; }
 .tv-heading { margin: 0 0 clamp(1rem, 4vh, 3rem); color: #fff5df; font-size: clamp(1.5rem, 3vw, 3rem); line-height: 1.15; }
@@ -66,6 +67,7 @@ textarea { resize: vertical; min-height: 8rem; font-size: 1.15rem; line-height: 
 .tv-error { gap: 1rem; }
 .tv-error h1 { margin: 0; font-size: clamp(2.5rem, 7vw, 7rem); }
 .tv-error p { max-width: 80%; margin: 0; font-size: clamp(1.5rem, 3vw, 3rem); }
+.tv-creator-credit { position: absolute; bottom: clamp(1rem, 2.5vw, 2rem); left: 50%; margin: 0; transform: translateX(-50%); color: #777; font-size: clamp(.75rem, 1.1vw, 1rem); }
 .noscript-message { display: block; margin-top: 1rem; }
 
 @media (max-width: 33.99rem) {
