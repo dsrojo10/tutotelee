@@ -28,6 +28,18 @@ describe('diagnóstico temporal del TV', () => {
     expect(debugEnabled('?x=2&debug=1')).toBe(true);
   });
 
+  it('muestra la etapa desde el inicio sin esperar un error de Firebase', () => {
+    const { diagnostics, element } = fixture();
+    expect(element.hidden).toBe(false);
+    expect(element.textContent).toContain('stage: firebase-init');
+    expect(element.textContent).toContain('auth: pendiente');
+    diagnostics.stage('create-room');
+    expect(element.textContent).toContain('stage: create-room');
+    diagnostics.update({ connected: false });
+    expect(element.textContent).toContain('connected: false');
+    expect(element.textContent).not.toContain('error.code:');
+  });
+
   it('tolera APIs ausentes y redacta secretos incluso dentro de errores', () => {
     const { diagnostics, element } = fixture();
     diagnostics.protect('short-uid', 'secret-key');

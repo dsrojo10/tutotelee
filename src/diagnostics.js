@@ -27,12 +27,10 @@ export function createTvDiagnostics(search, element, environment = window) {
     offset: 'desconocido', localMinusServer: 'desconocido',
   };
   const secrets = [];
-  let visible = false;
   function probe(callback) {
     try { return callback(); } catch { return 'no disponible (excepción)'; }
   }
   function render() {
-    if (!visible) return;
     const nav = environment.navigator;
     const lines = {
       userAgent: probe(() => nav.userAgent),
@@ -51,9 +49,10 @@ export function createTvDiagnostics(search, element, environment = window) {
     element.textContent = 'Diagnóstico temporal (debug=1)\n' + Object.entries(lines)
       .map(([key, value]) => `${key}: ${value}`).join('\n');
   }
+  render();
   return {
     protect(...values) { secrets.push(...values.filter(value => typeof value === 'string')); },
-    stage(stage) { state.stage = stage; },
+    stage(stage) { state.stage = stage; render(); },
     update(values) { Object.assign(state, values); render(); },
     error(error, stage = state.stage) {
       const cause = error?.cause || error;
@@ -64,7 +63,6 @@ export function createTvDiagnostics(search, element, environment = window) {
       state['error.message'] = safeErrorText(cause?.message, secrets) || '(sin message)';
       // Retain clock read failures even if a later write also fails.
       if (stage === 'server-time') state.serverTimeError = `${state['error.code']} / ${state['error.name']}: ${state['error.message']}`;
-      visible = true;
       render();
     },
   };

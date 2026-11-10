@@ -142,7 +142,7 @@ El MVP está implementado con dos entradas (`index.html` y `tv.html`), sincroniz
 
 ## 12. Diagnóstico temporal y explícito del TV
 
-- Únicamente `debug=1` como parámetro de la URL del TV habilita un panel de diagnóstico cuando ocurre un error.
+- Únicamente `debug=1` como parámetro de la URL del TV habilita un panel de diagnóstico visible desde el inicio. Actualizarlo al cambiar de etapa o estado, aunque la operación quede pendiente sin producir un error.
 - Mostrar entorno del navegador, disponibilidad de APIs, autenticación sin UID, presencia de Realtime Database, fuente del reloj (`server-offset` o `local-fallback`), reloj local, offset, hora estimada del servidor y diferencia local menos servidor.
 - Distinguir fallos de inicialización de Firebase, autenticación, lectura del reloj, escritura de sesión, transacción de pairing y onDisconnect, conservando la causa interna y mostrando code, name y message redactado solo en debug.
 - Mantener visible el fallo de lectura del reloj aunque se use el fallback local o falle una operación posterior.
