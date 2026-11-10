@@ -5,6 +5,7 @@ import { ensureAnonymousUser, getFirebaseServices } from './firebase.js';
 import { createTvSession, getServerNow } from './pairing.js';
 
 import { createTvDiagnostics } from './diagnostics.js';
+import { configureTvTransport } from './tv-transport.js';
 
 const diagnostics = createTvDiagnostics(window.location.search, document.querySelector('#tv-diagnostics'));
 
@@ -121,6 +122,7 @@ async function restartPairing(database, tvUid) {
 async function start() {
   try {
     diagnostics?.stage('firebase-init');
+    configureTvTransport(window, diagnostics);
     const { database } = getFirebaseServices(diagnostics);
     if (diagnostics) {
       try {

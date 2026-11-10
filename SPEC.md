@@ -96,6 +96,7 @@ Los controles principales deben ser grandes, claros y fáciles de utilizar en un
 - GitHub Pages para hosting.
 - GitHub Actions para build y deploy.
 - No desplegar un servidor propio Node, Express, Socket.IO ni equivalente.
+- En el TV Samsung identificado por `SMART-TV` y `Tizen`, seleccionar WebSocket con la API pública de Firebase antes de inicializar Realtime Database, si el navegador dispone de esa API. Evitar que un fallo WebSocket recordado por el SDK fuerce long polling hacia un backend dinámico no autorizado por la CSP. Mantener la selección automática en los otros navegadores y celulares y conservar la CSP actual. Si la red del TV bloquea WebSocket, esta alternativa tampoco conectará; no garantiza compatibilidad con cualquier red.
 - Node se utiliza únicamente durante desarrollo, tests y build.
 - La configuración pública necesaria del cliente Firebase se suministra mediante variables de entorno `VITE_FIREBASE_*`. No incluir secretos privados en el frontend ni en el repositorio.
 
@@ -144,6 +145,7 @@ El MVP está implementado con dos entradas (`index.html` y `tv.html`), sincroniz
 
 - Únicamente `debug=1` como parámetro de la URL del TV habilita un panel de diagnóstico visible desde el inicio. Actualizarlo al cambiar de etapa o estado, aunque la operación quede pendiente sin producir un error.
 - Mostrar entorno del navegador, disponibilidad de APIs, autenticación sin UID, presencia de Realtime Database, fuente del reloj (`server-offset` o `local-fallback`), reloj local, offset, hora estimada del servidor y diferencia local menos servidor.
+- Mostrar `transport` (`websocket` o `auto`) para identificar la selección de transporte del TV.
 - Distinguir fallos de inicialización de Firebase, autenticación, lectura del reloj, escritura de sesión, transacción de pairing y onDisconnect, conservando la causa interna y mostrando code, name y message redactado solo en debug.
 - Mantener visible el fallo de lectura del reloj aunque se use el fallback local o falle una operación posterior.
 - Nunca mostrar configuración completa, API key, tokens, credenciales, UID, sessionId ni códigos adicionales. No almacenar ni transmitir diagnósticos.

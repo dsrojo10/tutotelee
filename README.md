@@ -181,6 +181,12 @@ Sin la site key la aplicación sigue funcionando exactamente como antes. App Che
 
 ## Diagnóstico temporal del Smart TV
 
+En TV Samsung con `SMART-TV` y `Tizen` en el identificador del navegador y WebSocket disponible, el TV usa `forceWebSockets()` antes de inicializar Realtime Database. En otros navegadores y en celulares el SDK conserva su selección automática. El panel indica `transport: websocket` o `auto`. No se amplían la CSP ni las reglas. Esta alternativa depende de que la red permita WebSocket.
+
+Se reprodujo una conexión atascada con `firebase:previous_websocket_failure=true` y un backend asignado `s-gke-usc1-nssi3-61.firebaseio.com`: el SDK elegía long polling, la CSP lo bloqueaba y `.info/connected` permanecía en `false`. En el mismo navegador, WebSocket directo consiguió `connected: true` sin cambiar la política. Esto explica un mecanismo posible para el fallo reportado; aún debe confirmarse en el TV real. No editar ni borrar manualmente claves internas del SDK como parte de la corrección. Véanse la [API oficial de transporte](https://firebase.google.com/docs/reference/js/database#forcewebsockets) y la [selección de transporte del SDK](https://github.com/firebase/firebase-js-sdk/blob/main/packages/database/src/realtime/TransportManager.ts).
+
+Para validarlo en el Samsung, abrir el TV varias veces, confirmar `transport: websocket`, `connected: true` y códigos nuevos; emparejar un celular y comprobar el envío de texto y la creación del siguiente código al desconectarlo.
+
 Abre `https://dsrojo10.github.io/tutotelee/tv.html?debug=1` después de publicar este build, o añade `?debug=1` a la URL del TV en el entorno que estés probando. Solo ese parámetro activa el diagnóstico; retíralo para volver a la pantalla habitual. No activa el modo debug de Firebase App Check.
 
 Con `debug=1` aparece desde el inicio un panel pequeño de alto contraste, desplazable y accesible con teclado. Actualiza la etapa y los estados sin esperar a que ocurra un error, para identificar operaciones que quedan pendientes. Muestra navegador, plataforma, reloj, disponibilidad de APIs, resultado de autenticación anónima (sin UID), presencia mediante `.info/connected`, lectura de `.info/serverTimeOffset`, `serverTimeSource` (`server-offset` o `local-fallback`), `localNow`, `serverNow`, `offset` y `localMinusServer` (local menos servidor, en ms). La disponibilidad de localStorage comprueba acceso y lectura con captura de excepciones; no escribe datos ni garantiza persistencia.
